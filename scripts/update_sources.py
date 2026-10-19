@@ -78,7 +78,7 @@ UPSTREAM_SOURCES = [
     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/hk.m3u",
     "https://raw.githubusercontent.com/YueChan/Live/main/IPTV.m3u",
-    "https://raw.githubusercontent.com/Guoke399/iptv/main/iptv.m3u",
+    "http://124.71.19.220/c/1",
 ]
 
 
