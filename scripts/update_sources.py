@@ -9,29 +9,30 @@ GUANGDONG_EXCLUDES = ["广东影视", "4K", "4k", "广东少儿", "嘉佳卡通"
 # 公开台标基础库链接 (Fanmingming live logo 库)
 LOGO_BASE = "https://raw.githubusercontent.com/fanmingming/live/main/tv/"
 
-# 频道定义与分类，`aliases` 为用于匹配上游源的各种可能名称/关键字
+# 频道定义与分类
+# CCTV 频道使用精准正则模式 (regex_pattern) 解决 CCTV1 匹配到 CCTV10-17 的问题
 CHANNEL_CONFIGS = [
     {
         "group": "央视频道",
         "channels": [
-            {"name": "CCTV-1 综合", "aliases": ["CCTV1", "CCTV-1", "CCTV1综合", "CCTV-1综合"], "logo": f"{LOGO_BASE}CCTV1.png"},
-            {"name": "CCTV-2 财经", "aliases": ["CCTV2", "CCTV-2", "CCTV2财经"], "logo": f"{LOGO_BASE}CCTV2.png"},
-            {"name": "CCTV-3 综艺", "aliases": ["CCTV3", "CCTV-3", "CCTV3综艺"], "logo": f"{LOGO_BASE}CCTV3.png"},
-            {"name": "CCTV-4 中文国际", "aliases": ["CCTV4", "CCTV-4", "CCTV4中文国际"], "logo": f"{LOGO_BASE}CCTV4.png"},
-            {"name": "CCTV-5 体育", "aliases": ["CCTV5", "CCTV-5", "CCTV5体育"], "logo": f"{LOGO_BASE}CCTV5.png"},
-            {"name": "CCTV-5+ 体育赛事", "aliases": ["CCTV5+", "CCTV-5+", "CCTV5+体育赛事"], "logo": f"{LOGO_BASE}CCTV5+.png"},
-            {"name": "CCTV-6 电影", "aliases": ["CCTV6", "CCTV-6", "CCTV6电影"], "logo": f"{LOGO_BASE}CCTV6.png"},
-            {"name": "CCTV-7 国防军事", "aliases": ["CCTV7", "CCTV-7", "CCTV7国防军事"], "logo": f"{LOGO_BASE}CCTV7.png"},
-            {"name": "CCTV-8 电视剧", "aliases": ["CCTV8", "CCTV-8", "CCTV8电视剧"], "logo": f"{LOGO_BASE}CCTV8.png"},
-            {"name": "CCTV-9 纪录", "aliases": ["CCTV9", "CCTV-9", "CCTV9纪录"], "logo": f"{LOGO_BASE}CCTV9.png"},
-            {"name": "CCTV-10 科教", "aliases": ["CCTV10", "CCTV-10", "CCTV10科教"], "logo": f"{LOGO_BASE}CCTV10.png"},
-            {"name": "CCTV-11 戏曲", "aliases": ["CCTV11", "CCTV-11", "CCTV11戏曲"], "logo": f"{LOGO_BASE}CCTV11.png"},
-            {"name": "CCTV-12 社会与法", "aliases": ["CCTV12", "CCTV-12", "CCTV12社会与法"], "logo": f"{LOGO_BASE}CCTV12.png"},
-            {"name": "CCTV-13 新闻", "aliases": ["CCTV13", "CCTV-13", "CCTV13新闻"], "logo": f"{LOGO_BASE}CCTV13.png"},
-            {"name": "CCTV-14 少儿", "aliases": ["CCTV14", "CCTV-14", "CCTV14少儿"], "logo": f"{LOGO_BASE}CCTV14.png"},
-            {"name": "CCTV-15 音乐", "aliases": ["CCTV15", "CCTV-15", "CCTV15音乐"], "logo": f"{LOGO_BASE}CCTV15.png"},
-            {"name": "CCTV-16 奥林匹克", "aliases": ["CCTV16", "CCTV-16", "CCTV16奥林匹克"], "logo": f"{LOGO_BASE}CCTV16.png"},
-            {"name": "CCTV-17 农业农村", "aliases": ["CCTV17", "CCTV-17", "CCTV17农业农村"], "logo": f"{LOGO_BASE}CCTV17.png"},
+            {"name": "CCTV-1 综合", "regex": r"^CCTV[-_\s]*1(?!\d)", "logo": f"{LOGO_BASE}CCTV1.png"},
+            {"name": "CCTV-2 财经", "regex": r"^CCTV[-_\s]*2(?!\d)", "logo": f"{LOGO_BASE}CCTV2.png"},
+            {"name": "CCTV-3 综艺", "regex": r"^CCTV[-_\s]*3(?!\d)", "logo": f"{LOGO_BASE}CCTV3.png"},
+            {"name": "CCTV-4 中文国际", "regex": r"^CCTV[-_\s]*4(?!\d)", "logo": f"{LOGO_BASE}CCTV4.png"},
+            {"name": "CCTV-5 体育", "regex": r"^CCTV[-_\s]*5(?!\d|\+)", "logo": f"{LOGO_BASE}CCTV5.png"},
+            {"name": "CCTV-5+ 体育赛事", "regex": r"^CCTV[-_\s]*5\+", "logo": f"{LOGO_BASE}CCTV5+.png"},
+            {"name": "CCTV-6 电影", "regex": r"^CCTV[-_\s]*6(?!\d)", "logo": f"{LOGO_BASE}CCTV6.png"},
+            {"name": "CCTV-7 国防军事", "regex": r"^CCTV[-_\s]*7(?!\d)", "logo": f"{LOGO_BASE}CCTV7.png"},
+            {"name": "CCTV-8 电视剧", "regex": r"^CCTV[-_\s]*8(?!\d)", "logo": f"{LOGO_BASE}CCTV8.png"},
+            {"name": "CCTV-9 纪录", "regex": r"^CCTV[-_\s]*9(?!\d)", "logo": f"{LOGO_BASE}CCTV9.png"},
+            {"name": "CCTV-10 科教", "regex": r"^CCTV[-_\s]*10(?!\d)", "logo": f"{LOGO_BASE}CCTV10.png"},
+            {"name": "CCTV-11 戏曲", "regex": r"^CCTV[-_\s]*11(?!\d)", "logo": f"{LOGO_BASE}CCTV11.png"},
+            {"name": "CCTV-12 社会与法", "regex": r"^CCTV[-_\s]*12(?!\d)", "logo": f"{LOGO_BASE}CCTV12.png"},
+            {"name": "CCTV-13 新闻", "regex": r"^CCTV[-_\s]*13(?!\d)", "logo": f"{LOGO_BASE}CCTV13.png"},
+            {"name": "CCTV-14 少儿", "regex": r"^CCTV[-_\s]*14(?!\d)", "logo": f"{LOGO_BASE}CCTV14.png"},
+            {"name": "CCTV-15 音乐", "regex": r"^CCTV[-_\s]*15(?!\d)", "logo": f"{LOGO_BASE}CCTV15.png"},
+            {"name": "CCTV-16 奥林匹克", "regex": r"^CCTV[-_\s]*16(?!\d)", "logo": f"{LOGO_BASE}CCTV16.png"},
+            {"name": "CCTV-17 农业农村", "regex": r"^CCTV[-_\s]*17(?!\d)", "logo": f"{LOGO_BASE}CCTV17.png"},
         ],
     },
     {
@@ -87,15 +88,19 @@ UPSTREAM_SOURCES = [
 ]
 
 
+
 def check_stream_validity(url, timeout=4):
-    """验证 HTTP/HLS 流连接有效性"""
+    """验证流有效性：防范返回 HTML 错误提示页的伪 200"""
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        # 尝试用 GET 获取一小段响应
         response = requests.get(url, headers=headers, stream=True, timeout=timeout, verify=False)
-        if response.status_code in [200, 206, 301, 302]:
+        
+        if response.status_code in [200, 206]:
+            content_sample = next(response.iter_content(chunk_size=1024), b"").decode("utf-8", errors="ignore").lower()
+            if "<html" in content_sample or "<body" in content_sample or "error" in content_sample:
+                return False
             return True
     except Exception:
         pass
@@ -111,8 +116,8 @@ def fetch_upstream_m3u():
             resp = requests.get(source, timeout=8)
             if resp.status_code == 200:
                 return resp.text.splitlines()
-        except Exception as e:
-            print(f"下载失败: {source}")
+        except Exception:
+            pass
         return []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -124,14 +129,13 @@ def fetch_upstream_m3u():
 
 
 def parse_m3u(lines):
-    """解析 M3U 内容，按频道全名/名称关键字映射 URL 列表"""
-    stream_map = [] # 存储字典 [{"name": raw_title, "url": stream_url}]
+    """解析 M3U 内容，提取频道标题与链接"""
+    stream_map = []
     current_name = None
 
     for line in lines:
         line = line.strip()
         if line.startswith("#EXTINF"):
-            # 优先提取 tvg-name，其次提取标号后面的名称
             match = re.search(r'tvg-name="([^"]+)"', line)
             if match:
                 current_name = match.group(1).strip()
@@ -146,18 +150,28 @@ def parse_m3u(lines):
     return stream_map
 
 
-def find_candidate_urls(aliases, stream_map):
-    """根据别名在抓取到的流中匹配链接"""
+def find_candidate_urls(ch_config, stream_map):
+    """精准查找频道的候选 URL"""
     candidates = []
-    for item in stream_map:
-        title = item["title"].upper().replace(" ", "")
-        for alias in aliases:
-            clean_alias = alias.upper().replace(" ", "")
-            # 精确包含或匹配
-            if clean_alias in title or title in clean_alias:
+    
+    # 优先处理正则（如 CCTV 频道，解决 CCTV1 匹配到 CCTV10-17 问题）
+    if "regex" in ch_config:
+        pattern = re.compile(ch_config["regex"], re.IGNORECASE)
+        for item in stream_map:
+            title = item["title"].replace(" ", "")
+            if pattern.search(title):
                 candidates.append(item["url"])
-                break
-    # 保持顺序去重
+    # 其次使用别名列表匹配
+    elif "aliases" in ch_config:
+        aliases = ch_config["aliases"]
+        for item in stream_map:
+            title = item["title"].upper().replace(" ", "")
+            for alias in aliases:
+                clean_alias = alias.upper().replace(" ", "")
+                if clean_alias in title or title in clean_alias:
+                    candidates.append(item["url"])
+                    break
+
     return list(dict.fromkeys(candidates))
 
 
@@ -177,18 +191,17 @@ def main():
         
         for ch in group_info["channels"]:
             ch_name = ch["name"]
-            ch_aliases = ch.get("aliases", [ch_name])
             ch_logo = ch["logo"]
 
-            # 过滤排除名单
+            # 过滤广东频道排除名单
             if group_name == "广东频道" and any(ex in ch_name for ex in GUANGDONG_EXCLUDES):
                 print(f"[SKIP] {ch_name} (在排除名单中)")
                 continue
 
-            # 获取该频道的所有候选 URL
-            candidate_urls = find_candidate_urls(ch_aliases, stream_map)
+            # 精准获取候选 URL
+            candidate_urls = find_candidate_urls(ch, stream_map)
 
-            # 测速/有效性判断 (取前 8 个候选源测试)
+            # 测速验证
             valid_url = None
             if candidate_urls:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
@@ -206,11 +219,11 @@ def main():
                 extinf = f'#EXTINF:-1 tvg-name="{ch_name}" tvg-logo="{ch_logo}" group-title="{group_name}",{ch_name}'
                 m3u_content.append(extinf)
                 m3u_content.append(valid_url)
-                print(f"[✓ SUCCESS] {ch_name} (找到有效源)")
+                print(f"[✓ SUCCESS] {ch_name} (成功找到有效源)")
             else:
-                print(f"[✗ FAIL] {ch_name} (未查找到有效源)")
+                print(f"[✗ FAIL] {ch_name} (未找到有效源)")
 
-    # 导出文件
+    # 输出保存
     with open("iptv.m3u", "w", encoding="utf-8") as f:
         f.write("\n".join(m3u_content))
     print("\n✅ iptv.m3u 文件更新完成！")
