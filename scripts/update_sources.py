@@ -91,7 +91,6 @@ def search_github_code_sources():
         headers["Authorization"] = f"token {token}"
         
     github_urls = []
-    # 检索关键词组合
     queries = [
         "filename:iptv.m3u CCTV1",
         "filename:live.m3u 翡翠台",
@@ -105,8 +104,7 @@ def search_github_code_sources():
             resp = requests.get(url, headers=headers, timeout=6)
             if resp.status_code == 200:
                 data = resp.json()
-                for item in data.get("items", [])[:3]: # 每个关键词取前3个最新修改的文件
-                    # 将 html_url 转换为 raw 文件的直链地址
+                for item in data.get("items", [])[:3]:
                     raw_url = item.get("html_url", "").replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
                     if raw_url and raw_url not in github_urls:
                         github_urls.append(raw_url)
@@ -153,13 +151,12 @@ def fetch_upstream_m3u(sources):
     return all_lines
 
 def parse_m3u_and_txt(lines):
-    """解析 M3U 及 txt (频道,URL) 格式的内容"""
+    """解析 M3U 及 txt 格式的内容"""
     stream_map = []
     current_name = None
 
     for line in lines:
         line = line.strip()
-        # 处理 M3U 格式
         if line.startswith("#EXTINF"):
             match = re.search(r'tvg-name="([^"]+)"', line)
             if match:
@@ -171,7 +168,6 @@ def parse_m3u_and_txt(lines):
         elif line and not line.startswith("#") and current_name:
             stream_map.append({"title": current_name, "url": line})
             current_name = None
-        # 兼容处理 TXT 格式 (例如: CCTV1,http://...)
         elif "," in line and "://" in line:
             parts = line.split(",")
             if len(parts) == 2:
@@ -180,7 +176,7 @@ def parse_m3u_and_txt(lines):
     return stream_map
 
 def find_candidate_urls(ch_config, stream_map):
-    """精准查找频道的候选 URL"""
+    """精准查找频道的候选 URL（去重但保留多个不同链接）"""
     candidates = []
     
     if "regex" in ch_config:
@@ -202,7 +198,6 @@ def find_candidate_urls(ch_config, stream_map):
     return list(dict.fromkeys(candidates))
 
 def main():
-    # 1. 结合静态源与 GitHub API 动态检索源
     github_dynamic_sources = search_github_code_sources()
     all_sources = list(dict.fromkeys(UPSTREAM_SOURCES + github_dynamic_sources))
     
@@ -227,24 +222,30 @@ def main():
 
             candidate_urls = find_candidate_urls(ch, stream_map)
 
-            valid_url = None
+            # 测速验证，收集所有可用的有效源（最多取前 4 个可用线路）
+            valid_urls = []
             if candidate_urls:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                    # 提交前 12 个候选源进行并发测试
                     future_to_url = {
                         executor.submit(check_stream_validity, url): url
-                        for url in candidate_urls[:10]  # 抽取前 10 个源并发测速
+                        for url in candidate_urls[:12]
                     }
                     for future in concurrent.futures.as_completed(future_to_url):
                         url = future_to_url[future]
                         if future.result():
-                            valid_url = url
-                            break
+                            valid_urls.append(url)
+                            if len(valid_urls) >= 4:  # 每个频道最多保留 4 条可用线路
+                                break
 
-            if valid_url:
-                extinf = f'#EXTINF:-1 tvg-name="{ch_name}" tvg-logo="{ch_logo}" group-title="{group_name}",{ch_name}'
-                m3u_content.append(extinf)
-                m3u_content.append(valid_url)
-                print(f"[✓ SUCCESS] {ch_name} (成功找到有效源)")
+            # 如果找到可用源，按“线路1”、“线路2”依次写入
+            if valid_urls:
+                for idx, v_url in enumerate(valid_urls, start=1):
+                    line_name = f"{ch_name} 线路{idx}"
+                    extinf = f'#EXTINF:-1 tvg-name="{ch_name}" tvg-logo="{ch_logo}" group-title="{group_name}",{line_name}'
+                    m3u_content.append(extinf)
+                    m3u_content.append(v_url)
+                print(f"[✓ SUCCESS] {ch_name} (成功找到 {len(valid_urls)} 条有效线路)")
             else:
                 print(f"[✗ FAIL] {ch_name} (未找到有效源)")
 
@@ -252,5 +253,4 @@ def main():
         f.write("\n".join(m3u_content))
     print("\n✅ iptv.m3u 文件更新完成！")
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main"></script>
