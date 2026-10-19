@@ -74,11 +74,15 @@ CHANNEL_CONFIGS = [
 # 补充更多覆盖广东台、港台直播源的上游公开库
 UPSTREAM_SOURCES = [
     "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u",
-    "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/v6.m3u",
     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/hk.m3u",
     "https://raw.githubusercontent.com/YueChan/Live/main/IPTV.m3u",
     "http://124.71.19.220/c/1",
+    "https://raw.githubusercontent.com/zilong7728/Collect-IPTV/refs/heads/main/best_sorted.m3u",
+    "https://guovin.github.io/iptv-api/result.m3u",
+    "https://raw.githubusercontent.com/vbskycn/iptv/refs/heads/master/tv/iptv4.m3u",
+    "https://live.yang-1989.eu.org/Live.m3u",
+    "https://raw.githubusercontent.com/suxuang/myIPTV/refs/heads/main/ipv4.m3u",
 ]
 
 
