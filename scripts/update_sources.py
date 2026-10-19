@@ -83,6 +83,7 @@ UPSTREAM_SOURCES = [
     "https://raw.githubusercontent.com/vbskycn/iptv/refs/heads/master/tv/iptv4.m3u",
     "https://live.yang-1989.eu.org/Live.m3u",
     "https://raw.githubusercontent.com/suxuang/myIPTV/refs/heads/main/ipv4.m3u",
+    "https://raw.githubusercontent.com/CCSH/IPTV/refs/heads/main/live.m3u",
 ]
 
 
