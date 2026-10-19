@@ -1,16 +1,12 @@
 import concurrent.futures
+import os
 import re
 import requests
 
 # ----------------- 频道配置 -----------------
-# 需排除的广东频道关键词
 GUANGDONG_EXCLUDES = ["广东影视", "4K", "4k", "广东少儿", "嘉佳卡通", "南方购物"]
-
-# 公开台标基础库链接 (Fanmingming live logo 库)
 LOGO_BASE = "https://raw.githubusercontent.com/fanmingming/live/main/tv/"
 
-# 频道定义与分类
-# CCTV 频道使用精准正则模式 (regex_pattern) 解决 CCTV1 匹配到 CCTV10-17 的问题
 CHANNEL_CONFIGS = [
     {
         "group": "央视频道",
@@ -87,16 +83,46 @@ UPSTREAM_SOURCES = [
     "https://raw.githubusercontent.com/CCSH/IPTV/refs/heads/main/live.m3u",
 ]
 
-
+def search_github_code_sources():
+    """使用 GitHub Code Search API 动态检索最新的直播源文件 URL"""
+    token = os.getenv("GH_TOKEN")
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    if token:
+        headers["Authorization"] = f"token {token}"
+        
+    github_urls = []
+    # 检索关键词组合
+    queries = [
+        "filename:iptv.m3u CCTV1",
+        "filename:live.m3u 翡翠台",
+        "extension:m3u ViuTV 99",
+    ]
+    
+    print("\n🔍 开始通过 GitHub API 动态检索最新开源直播源代码库...")
+    for query in queries:
+        try:
+            url = f"https://api.github.com/search/code?q={query}&sort=indexed&order=desc"
+            resp = requests.get(url, headers=headers, timeout=6)
+            if resp.status_code == 200:
+                data = resp.json()
+                for item in data.get("items", [])[:3]: # 每个关键词取前3个最新修改的文件
+                    # 将 html_url 转换为 raw 文件的直链地址
+                    raw_url = item.get("html_url", "").replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+                    if raw_url and raw_url not in github_urls:
+                        github_urls.append(raw_url)
+                        print(f"找到 GitHub 代码源: {raw_url}")
+        except Exception as e:
+            print(f"检索 GitHub 代码失败 (Query: {query}): {e}")
+            
+    return github_urls
 
 def check_stream_validity(url, timeout=4):
     """验证流有效性：防范返回 HTML 错误提示页的伪 200"""
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
         response = requests.get(url, headers=headers, stream=True, timeout=timeout, verify=False)
-        
         if response.status_code in [200, 206]:
             content_sample = next(response.iter_content(chunk_size=1024), b"").decode("utf-8", errors="ignore").lower()
             if "<html" in content_sample or "<body" in content_sample or "error" in content_sample:
@@ -106,9 +132,8 @@ def check_stream_validity(url, timeout=4):
         pass
     return False
 
-
-def fetch_upstream_m3u():
-    """并发下载上游公开 M3U 源文件"""
+def fetch_upstream_m3u(sources):
+    """并发下载上游 M3U 源文件"""
     all_lines = []
     
     def fetch_one(source):
@@ -120,21 +145,21 @@ def fetch_upstream_m3u():
             pass
         return []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        results = executor.map(fetch_one, UPSTREAM_SOURCES)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        results = executor.map(fetch_one, sources)
         for lines in results:
             all_lines.extend(lines)
             
     return all_lines
 
-
-def parse_m3u(lines):
-    """解析 M3U 内容，提取频道标题与链接"""
+def parse_m3u_and_txt(lines):
+    """解析 M3U 及 txt (频道,URL) 格式的内容"""
     stream_map = []
     current_name = None
 
     for line in lines:
         line = line.strip()
+        # 处理 M3U 格式
         if line.startswith("#EXTINF"):
             match = re.search(r'tvg-name="([^"]+)"', line)
             if match:
@@ -146,22 +171,24 @@ def parse_m3u(lines):
         elif line and not line.startswith("#") and current_name:
             stream_map.append({"title": current_name, "url": line})
             current_name = None
+        # 兼容处理 TXT 格式 (例如: CCTV1,http://...)
+        elif "," in line and "://" in line:
+            parts = line.split(",")
+            if len(parts) == 2:
+                stream_map.append({"title": parts[0].strip(), "url": parts[1].strip()})
             
     return stream_map
-
 
 def find_candidate_urls(ch_config, stream_map):
     """精准查找频道的候选 URL"""
     candidates = []
     
-    # 优先处理正则（如 CCTV 频道，解决 CCTV1 匹配到 CCTV10-17 问题）
     if "regex" in ch_config:
         pattern = re.compile(ch_config["regex"], re.IGNORECASE)
         for item in stream_map:
             title = item["title"].replace(" ", "")
             if pattern.search(title):
                 candidates.append(item["url"])
-    # 其次使用别名列表匹配
     elif "aliases" in ch_config:
         aliases = ch_config["aliases"]
         for item in stream_map:
@@ -174,16 +201,17 @@ def find_candidate_urls(ch_config, stream_map):
 
     return list(dict.fromkeys(candidates))
 
-
 def main():
-    print("正在抓取上游直播源...")
-    upstream_lines = fetch_upstream_m3u()
-    stream_map = parse_m3u(upstream_lines)
+    # 1. 结合静态源与 GitHub API 动态检索源
+    github_dynamic_sources = search_github_code_sources()
+    all_sources = list(dict.fromkeys(UPSTREAM_SOURCES + github_dynamic_sources))
+    
+    print(f"\n开始抓取共 {len(all_sources)} 个上游直播源...")
+    upstream_lines = fetch_upstream_m3u(all_sources)
+    stream_map = parse_m3u_and_txt(upstream_lines)
     print(f"共解析得到 {len(stream_map)} 个备选频道流链接")
 
-    m3u_content = [
-        '#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"'
-    ]
+    m3u_content = ['#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"']
 
     for group_info in CHANNEL_CONFIGS:
         group_name = group_info["group"]
@@ -193,21 +221,18 @@ def main():
             ch_name = ch["name"]
             ch_logo = ch["logo"]
 
-            # 过滤广东频道排除名单
             if group_name == "广东频道" and any(ex in ch_name for ex in GUANGDONG_EXCLUDES):
                 print(f"[SKIP] {ch_name} (在排除名单中)")
                 continue
 
-            # 精准获取候选 URL
             candidate_urls = find_candidate_urls(ch, stream_map)
 
-            # 测速验证
             valid_url = None
             if candidate_urls:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
                     future_to_url = {
                         executor.submit(check_stream_validity, url): url
-                        for url in candidate_urls[:8]
+                        for url in candidate_urls[:10]  # 抽取前 10 个源并发测速
                     }
                     for future in concurrent.futures.as_completed(future_to_url):
                         url = future_to_url[future]
@@ -223,11 +248,9 @@ def main():
             else:
                 print(f"[✗ FAIL] {ch_name} (未找到有效源)")
 
-    # 输出保存
     with open("iptv.m3u", "w", encoding="utf-8") as f:
         f.write("\n".join(m3u_content))
     print("\n✅ iptv.m3u 文件更新完成！")
-
 
 if __name__ == "__main__":
     main()
