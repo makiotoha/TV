@@ -222,11 +222,9 @@ def main():
 
             candidate_urls = find_candidate_urls(ch, stream_map)
 
-            # 测速验证，收集所有可用的有效源（最多取前 4 个可用线路）
             valid_urls = []
             if candidate_urls:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-                    # 提交前 12 个候选源进行并发测试
                     future_to_url = {
                         executor.submit(check_stream_validity, url): url
                         for url in candidate_urls[:12]
@@ -235,10 +233,9 @@ def main():
                         url = future_to_url[future]
                         if future.result():
                             valid_urls.append(url)
-                            if len(valid_urls) >= 4:  # 每个频道最多保留 4 条可用线路
+                            if len(valid_urls) >= 4:
                                 break
 
-            # 如果找到可用源，按“线路1”、“线路2”依次写入
             if valid_urls:
                 for idx, v_url in enumerate(valid_urls, start=1):
                     line_name = f"{ch_name} 线路{idx}"
@@ -253,4 +250,5 @@ def main():
         f.write("\n".join(m3u_content))
     print("\n✅ iptv.m3u 文件更新完成！")
 
-if __name__ == "__main"></script>
+if __name__ == "__main__":
+    main()
