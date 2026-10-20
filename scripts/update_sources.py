@@ -84,7 +84,6 @@ UPSTREAM_SOURCES = [
 ]
 
 def search_github_code_sources():
-    """使用 GitHub Code Search API 动态检索最新的直播源文件 URL"""
     token = os.getenv("GH_TOKEN")
     headers = {"Accept": "application/vnd.github.v3+json"}
     if token:
@@ -115,7 +114,6 @@ def search_github_code_sources():
     return github_urls
 
 def check_stream_validity(url, timeout=4):
-    """验证流有效性：防范返回 HTML 错误提示页的伪 200"""
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -131,7 +129,6 @@ def check_stream_validity(url, timeout=4):
     return False
 
 def fetch_upstream_m3u(sources):
-    """并发下载上游 M3U 源文件"""
     all_lines = []
     
     def fetch_one(source):
@@ -151,7 +148,6 @@ def fetch_upstream_m3u(sources):
     return all_lines
 
 def parse_m3u_and_txt(lines):
-    """解析 M3U 及 txt 格式的内容"""
     stream_map = []
     current_name = None
 
@@ -176,7 +172,6 @@ def parse_m3u_and_txt(lines):
     return stream_map
 
 def find_candidate_urls(ch_config, stream_map):
-    """精准查找频道的候选 URL（去重但保留多个不同链接）"""
     candidates = []
     
     if "regex" in ch_config:
@@ -206,7 +201,9 @@ def main():
     stream_map = parse_m3u_and_txt(upstream_lines)
     print(f"共解析得到 {len(stream_map)} 个备选频道流链接")
 
-    m3u_content = ['#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"']
+    # 准备两份文件的内容容器
+    m3u1_content = ['#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"']  # 方案1：带 线路1, 线路2
+    m3u2_content = ['#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"']  # 方案2：同名聚合，播放器自带换源
 
     for group_info in CHANNEL_CONFIGS:
         group_name = group_info["group"]
@@ -237,18 +234,32 @@ def main():
                                 break
 
             if valid_urls:
+                # 写入方案一 (iptv.m3u: 带线路后缀)
                 for idx, v_url in enumerate(valid_urls, start=1):
                     line_name = f"{ch_name} 线路{idx}"
-                    extinf = f'#EXTINF:-1 tvg-name="{ch_name}" tvg-logo="{ch_logo}" group-title="{group_name}",{line_name}'
-                    m3u_content.append(extinf)
-                    m3u_content.append(v_url)
-                print(f"[✓ SUCCESS] {ch_name} (成功找到 {len(valid_urls)} 条有效线路)")
+                    extinf1 = f'#EXTINF:-1 tvg-name="{ch_name}" tvg-logo="{ch_logo}" group-title="{group_name}",{line_name}'
+                    m3u1_content.append(extinf1)
+                    m3u1_content.append(v_url)
+
+                # 写入方案二 (iptv2.m3u: 频道名完全相同，由播放器原生识别为同频道多源)
+                for v_url in valid_urls:
+                    extinf2 = f'#EXTINF:-1 tvg-name="{ch_name}" tvg-logo="{ch_logo}" group-title="{group_name}",{ch_name}'
+                    m3u2_content.append(extinf2)
+                    m3u2_content.append(v_url)
+
+                print(f"[✓ SUCCESS] {ch_name} (成功聚合 {len(valid_urls)} 条有效线路)")
             else:
                 print(f"[✗ FAIL] {ch_name} (未找到有效源)")
 
+    # 导出文件 1
     with open("iptv.m3u", "w", encoding="utf-8") as f:
-        f.write("\n".join(m3u_content))
-    print("\n✅ iptv.m3u 文件更新完成！")
+        f.write("\n".join(m3u1_content))
+    
+    # 导出文件 2
+    with open("iptv2.m3u", "w", encoding="utf-8") as f:
+        f.write("\n".join(m3u2_content))
+        
+    print("\n✅ iptv.m3u 和 iptv2.m3u 文件全部生成完毕！")
 
 if __name__ == "__main__":
     main()
